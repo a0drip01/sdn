@@ -1,31 +1,29 @@
 from django.db.models import F
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
+from django.views import generic
 
 from .models import Choice, Question
 
 
+class IndexView(generic.ListView):
+    template_name = "register/index.html"
+    context_object_name = "latest_question_list"
 
-# Create your views here.
+    def get_queryset(self):
+        """Return the last five published questions."""
+        return Question.objects.order_by("-pub_date")[:5]
 
-def index(request):
-    return HttpResponse("Hello, world. You're at the register index.")
 
-# def detail(request, question_id):
-#     try:
-#         question = Question.objects.get(pk=question_id)
-#     except Question.DoesNotExist:
-#         raise Http404("Question does not exist")
-#     return render(request, "register/detail.html", {"question": question})
+class DetailView(generic.DetailView):
+    model = Question
+    template_name = "register/detail.html"
 
-def detail(request, question_id):
-    question = get_object_or_404(Question, pk=question_id)
-    return render(request, "register/detail.html", {"question": question})
 
-def results(request, question_id):
-    response = "You're looking at the results of question %s."
-    return HttpResponse(response % question_id)
+class ResultsView(generic.DetailView):
+    model = Question
+    template_name = "register/results.html"
 
 
 def vote(request, question_id):
@@ -36,7 +34,7 @@ def vote(request, question_id):
         # Redisplay the question voting form.
         return render(
             request,
-            "polls/detail.html",
+            "register/detail.html",
             {
                 "question": question,
                 "error_message": "You didn't select a choice.",
@@ -49,19 +47,6 @@ def vote(request, question_id):
         # with POST data. This prevents data from being posted twice if a
         # user hits the Back button.
         return HttpResponseRedirect(reverse("register:results", args=(question.id,)))
-
-def results(request, question_id):
-    question = get_object_or_404(Question, pk=question_id)
-    return render(request, "register/results.html", {"question": question})
-
-
-def index(request):
-    latest_question_list = Question.objects.order_by("-pub_date")[:5]
-    context = {"latest_question_list": latest_question_list}
-    # template = loader.get_template("register/index.html")
-    # return HttpResponse(template.render(context, request))
-    return render(request, "register/index.html", context) # The render() function takes the request object as its first argument, a template name as its second argument and a dictionary as its optional third argument. It returns an HttpResponse object of the given template rendered with the given context.
-
 
 
 
